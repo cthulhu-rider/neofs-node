@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/nspcc-dev/neo-go/pkg/util"
-	SDKClient "github.com/nspcc-dev/neofs-api-go/pkg/client"
+	"github.com/nspcc-dev/neofs-api-go/pkg/container"
+	"github.com/nspcc-dev/neofs-api-go/pkg/netmap"
+	"github.com/nspcc-dev/neofs-api-go/pkg/object"
 	"github.com/nspcc-dev/neofs-node/pkg/innerring/invoke"
 	"github.com/nspcc-dev/neofs-node/pkg/morph/client"
 	wrapContainer "github.com/nspcc-dev/neofs-node/pkg/morph/client/container/wrapper"
@@ -24,9 +26,8 @@ type (
 		InnerRingSize() int32
 	}
 
-	// NeoFSClientCache is an interface for cache of neofs RPC clients
-	NeoFSClientCache interface {
-		Get(address string, opts ...SDKClient.Option) (*SDKClient.Client, error)
+	SGSearcher interface {
+		SearchSG(context.Context, *netmap.Node, *container.ID) ([]*object.ID, error)
 	}
 
 	TaskManager interface {
@@ -45,7 +46,7 @@ type (
 		auditContract     util.Uint160
 		morphClient       *client.Client
 		irList            Indexer
-		clientCache       NeoFSClientCache
+		sgSearcher        SGSearcher
 		searchTimeout     time.Duration
 
 		containerClient *wrapContainer.Wrapper
@@ -64,7 +65,7 @@ type (
 		AuditContract     util.Uint160
 		MorphClient       *client.Client
 		IRList            Indexer
-		ClientCache       NeoFSClientCache
+		ClientCache       SGSearcher
 		RPCSearchTimeout  time.Duration
 		TaskManager       TaskManager
 		Reporter          audit.Reporter
@@ -123,7 +124,7 @@ func New(p *Params) (*Processor, error) {
 		auditContract:     p.AuditContract,
 		morphClient:       p.MorphClient,
 		irList:            p.IRList,
-		clientCache:       p.ClientCache,
+		sgSearcher:        p.ClientCache,
 		searchTimeout:     p.RPCSearchTimeout,
 		containerClient:   containerClient,
 		netmapClient:      netmapClient,

@@ -3,18 +3,13 @@ package audit
 import (
 	"context"
 
-	"github.com/nspcc-dev/neofs-api-go/pkg/client"
 	"github.com/nspcc-dev/neofs-api-go/pkg/container"
 	"github.com/nspcc-dev/neofs-api-go/pkg/netmap"
 	"github.com/nspcc-dev/neofs-api-go/pkg/object"
-	"github.com/nspcc-dev/neofs-node/pkg/network"
 	"github.com/nspcc-dev/neofs-node/pkg/services/audit"
-	"github.com/nspcc-dev/neofs-node/pkg/services/object_manager/storagegroup"
 	"github.com/nspcc-dev/neofs-node/pkg/util/rand"
 	"go.uber.org/zap"
 )
-
-var sgFilter = storagegroup.SearchQuery()
 
 func (ap *Processor) processStartAudit(epoch uint64) {
 	log := ap.log.With(zap.Uint64("epoch", epoch))
@@ -49,56 +44,64 @@ func (ap *Processor) processStartAudit(epoch uint64) {
 	auditCtx, ap.prevAuditCanceler = context.WithCancel(context.Background())
 
 	for i := range containers {
-		cnr, err := ap.containerClient.Get(containers[i]) // get container structure
-		if err != nil {
-			log.Error("can't get container info, ignore",
-				zap.Stringer("cid", containers[i]),
-				zap.String("error", err.Error()))
-
-			continue
-		}
-
-		// find all container nodes for current epoch
-		nodes, err := nm.GetContainerNodes(cnr.PlacementPolicy(), nil)
-		if err != nil {
-			log.Info("can't build placement for container, ignore",
-				zap.Stringer("cid", containers[i]),
-				zap.String("error", err.Error()))
-
-			continue
-		}
-
-		n := nodes.Flatten()
-		crand := rand.New() // math/rand with cryptographic source
-
-		// shuffle nodes to ask a random one
-		crand.Shuffle(len(n), func(i, j int) {
-			n[i], n[j] = n[j], n[i]
-		})
-
-		// search storage groups
-		storageGroups := ap.findStorageGroups(containers[i], n)
-		log.Info("select storage groups for audit",
-			zap.Stringer("cid", containers[i]),
-			zap.Int("amount", len(storageGroups)))
-
 		auditTask := new(audit.Task).
-			WithReporter(&epochAuditReporter{
-				epoch: epoch,
-				rep:   ap.reporter,
-			}).
 			WithAuditContext(auditCtx).
-			WithContainerID(containers[i]).
-			WithStorageGroupList(storageGroups).
-			WithContainerStructure(cnr).
-			WithContainerNodes(nodes).
 			WithNetworkMap(nm)
 
-		if err := ap.taskManager.PushTask(auditTask); err != nil {
-			ap.log.Error("could not push audit task",
-				zap.String("error", err.Error()),
-			)
-		}
+		ap.processContainer(auditTask, epoch, containers[i])
+	}
+}
+
+func (ap *Processor) processContainer(task *audit.Task, epoch uint64, cid *container.ID) {
+	log := ap.log.With(
+		zap.Stringer("cid", cid),
+	)
+
+	cnr, err := ap.containerClient.Get(cid) // get container structure
+	if err != nil {
+		log.Error("can't get container info, ignore",
+			zap.String("error", err.Error()))
+
+		return
+	}
+
+	// find all container nodes for current epoch
+	nodes, err := task.NetworkMap().GetContainerNodes(cnr.PlacementPolicy(), nil)
+	if err != nil {
+		log.Info("can't build placement for container, ignore",
+			zap.String("error", err.Error()))
+
+		return
+	}
+
+	n := nodes.Flatten()
+	crand := rand.New() // math/rand with cryptographic source
+
+	// shuffle nodes to ask a random one
+	crand.Shuffle(len(n), func(i, j int) {
+		n[i], n[j] = n[j], n[i]
+	})
+
+	// search storage groups
+	storageGroups := ap.findStorageGroups(cid, n)
+
+	log.Info("select storage groups for audit",
+		zap.Int("amount", len(storageGroups)))
+
+	task.
+		WithReporter(&epochAuditReporter{
+			epoch: epoch,
+			rep:   ap.reporter,
+		}).
+		WithStorageGroupList(storageGroups).
+		WithContainerStructure(cnr).
+		WithContainerNodes(nodes).
+		WithContainerID(cid)
+
+	if err := ap.taskManager.PushTask(task); err != nil {
+		ap.log.Error("could not push audit task",
+			zap.String("error", err.Error()),
+		)
 	}
 }
 
@@ -115,26 +118,8 @@ func (ap *Processor) findStorageGroups(cid *container.ID, shuffled netmap.Nodes)
 			zap.Int("total_tries", ln),
 		)
 
-		addr, err := network.IPAddrFromMultiaddr(shuffled[i].Address())
-		if err != nil {
-			log.Warn("can't parse remote address", zap.String("error", err.Error()))
-
-			continue
-		}
-
-		cli, err := ap.clientCache.Get(addr)
-		if err != nil {
-			log.Warn("can't setup remote connection", zap.String("error", err.Error()))
-
-			continue
-		}
-
-		sgSearchParams := &client.SearchObjectParams{}
-		sgSearchParams.WithContainerID(cid)
-		sgSearchParams.WithSearchFilters(sgFilter)
-
 		ctx, cancel := context.WithTimeout(context.Background(), ap.searchTimeout)
-		result, err := cli.SearchObject(ctx, sgSearchParams)
+		result, err := ap.sgSearcher.SearchSG(ctx, shuffled[i], cid)
 		cancel()
 
 		if err != nil {

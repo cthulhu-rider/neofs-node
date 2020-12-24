@@ -15,6 +15,7 @@ import (
 	"github.com/nspcc-dev/neofs-node/pkg/innerring/processors/container"
 	"github.com/nspcc-dev/neofs-node/pkg/innerring/processors/neofs"
 	"github.com/nspcc-dev/neofs-node/pkg/innerring/processors/netmap"
+	"github.com/nspcc-dev/neofs-node/pkg/innerring/rpc"
 	"github.com/nspcc-dev/neofs-node/pkg/innerring/timers"
 	"github.com/nspcc-dev/neofs-node/pkg/morph/client"
 	auditWrapper "github.com/nspcc-dev/neofs-node/pkg/morph/client/audit/wrapper"
@@ -217,13 +218,13 @@ func New(ctx context.Context, log *zap.Logger, cfg *viper.Viper) (*Server, error
 		return nil, err
 	}
 
-	clientCache := newClientCache(&clientCacheParams{
-		Log:          log,
-		Key:          server.key,
-		SGTimeout:    cfg.GetDuration("audit.timeout.get"),
-		HeadTimeout:  cfg.GetDuration("audit.timeout.head"),
-		RangeTimeout: cfg.GetDuration("audit.timeout.rangehash"),
-	})
+	clientCache := rpc.New(
+		rpc.WithLogger(log),
+		rpc.WithKey(server.key),
+		rpc.WithGetTimeout(cfg.GetDuration("audit.timeout.get")),
+		rpc.WithHeadTimeout(cfg.GetDuration("audit.timeout.head")),
+		rpc.WithRangeHashTimeout(cfg.GetDuration("audit.timeout.rangehash")),
+	)
 
 	pdpPoolSize := cfg.GetInt("audit.pdp.pairs_pool_size")
 	porPoolSize := cfg.GetInt("audit.por.pool_size")
