@@ -9,7 +9,6 @@ import (
 	"github.com/nspcc-dev/neofs-api-go/pkg"
 	objectSDK "github.com/nspcc-dev/neofs-api-go/pkg/object"
 	"github.com/nspcc-dev/neofs-node/pkg/core/object"
-	"github.com/nspcc-dev/tzhash/tz"
 	"github.com/pkg/errors"
 )
 
@@ -145,22 +144,6 @@ func payloadHashersForObject(obj *object.RawObject) []*payloadChecksumHasher {
 				checksum.SetSHA256(csSHA)
 
 				obj.SetPayloadChecksum(checksum)
-			},
-		},
-		{
-			hasher: tz.New(),
-			checksumWriter: func(cs []byte) {
-				if ln := len(cs); ln != tzChecksumSize {
-					panic(fmt.Sprintf("wrong checksum length: expected %d, has %d", ln, tzChecksumSize))
-				}
-
-				csTZ := [tzChecksumSize]byte{}
-				copy(csTZ[:], cs)
-
-				checksum := pkg.NewChecksum()
-				checksum.SetTillichZemor(csTZ)
-
-				obj.SetPayloadHomomorphicHash(checksum)
 			},
 		},
 	}
