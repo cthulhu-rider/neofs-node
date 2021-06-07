@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/nspcc-dev/neofs-node/pkg/core/object"
+	"go.uber.org/zap"
 )
 
 // ErrBigObject is returned when object is too big to be placed in cache.
@@ -40,5 +41,8 @@ func (c *cache) Put(o *object.Object) error {
 	c.mtx.Unlock()
 
 	c.persistObjects([]objectInfo{oi})
+
+	c.log.Info("writecache PUT", zap.Stringer("address", o.Address()))
+
 	return nil
 }

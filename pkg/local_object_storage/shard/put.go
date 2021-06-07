@@ -63,5 +63,10 @@ func (s *Shard) Put(prm *PutPrm) (*PutRes, error) {
 		return nil, fmt.Errorf("could not put object to metabase: %w", err)
 	}
 
+	s.log.Info("shard PUT",
+		zap.Stringer("id", s.ID()),
+		zap.Stringer("address", prm.obj.Address()),
+	)
+
 	return nil, nil
 }
