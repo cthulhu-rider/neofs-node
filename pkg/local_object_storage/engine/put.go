@@ -49,29 +49,29 @@ func (e *StorageEngine) Put(prm *PutPrm) (*PutRes, error) {
 	finished := false
 
 	e.iterateOverSortedShards(prm.obj.Address(), func(ind int, s *shard.Shard) (stop bool) {
-		exists, err := s.Exists(existPrm)
-		if err != nil {
-			return false // this is not ErrAlreadyRemoved error so we can go to the next shard
-		}
-
-		if exists.Exists() {
-			if ind != 0 {
-				toMoveItPrm := new(shard.ToMoveItPrm)
-				toMoveItPrm.WithAddress(prm.obj.Address())
-
-				_, err = s.ToMoveIt(toMoveItPrm)
-				if err != nil {
-					e.log.Warn("could not mark object for shard relocation",
-						zap.Stringer("shard", s.ID()),
-						zap.String("error", err.Error()),
-					)
-				}
-			}
-
-			finished = true
-
-			return true
-		}
+		// exists, err := s.Exists(existPrm)
+		// if err != nil {
+		// 	return false // this is not ErrAlreadyRemoved error so we can go to the next shard
+		// }
+		//
+		// if exists.Exists() {
+		// 	if ind != 0 {
+		// 		toMoveItPrm := new(shard.ToMoveItPrm)
+		// 		toMoveItPrm.WithAddress(prm.obj.Address())
+		//
+		// 		_, err = s.ToMoveIt(toMoveItPrm)
+		// 		if err != nil {
+		// 			e.log.Warn("could not mark object for shard relocation",
+		// 				zap.Stringer("shard", s.ID()),
+		// 				zap.String("error", err.Error()),
+		// 			)
+		// 		}
+		// 	}
+		//
+		// 	finished = true
+		//
+		// 	return true
+		// }
 
 		putPrm := new(shard.PutPrm)
 		putPrm.WithObject(prm.obj)

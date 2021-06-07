@@ -5,7 +5,6 @@ import (
 
 	"github.com/nspcc-dev/neofs-node/pkg/core/object"
 	"github.com/nspcc-dev/neofs-node/pkg/local_object_storage/blobstor"
-	meta "github.com/nspcc-dev/neofs-node/pkg/local_object_storage/metabase"
 	"go.uber.org/zap"
 )
 
@@ -56,12 +55,14 @@ func (s *Shard) Put(prm *PutPrm) (*PutRes, error) {
 		return nil, fmt.Errorf("could not put object to BLOB storage: %w", err)
 	}
 
-	// put to metabase
-	if err := meta.Put(s.metaBase, prm.obj, res.BlobovniczaID()); err != nil {
-		// may we need to handle this case in a special way
-		// since the object has been successfully written to BlobStor
-		return nil, fmt.Errorf("could not put object to metabase: %w", err)
-	}
+	_ = res
+
+	// // put to metabase
+	// if err := meta.Put(s.metaBase, prm.obj, res.BlobovniczaID()); err != nil {
+	// 	// may we need to handle this case in a special way
+	// 	// since the object has been successfully written to BlobStor
+	// 	return nil, fmt.Errorf("could not put object to metabase: %w", err)
+	// }
 
 	return nil, nil
 }
