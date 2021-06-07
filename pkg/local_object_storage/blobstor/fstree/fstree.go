@@ -154,14 +154,30 @@ func (t *FSTree) Exists(addr *objectSDK.Address) (string, error) {
 }
 
 // Put puts object in storage.
-func (t *FSTree) Put(addr *objectSDK.Address, data []byte) error {
+func (t *FSTree) Put(addr *objectSDK.Address, data []byte) (err error) {
 	p := t.treePath(addr)
 
-	if err := os.MkdirAll(path.Dir(p), t.Permissions); err != nil {
+	if err = os.MkdirAll(path.Dir(p), t.Permissions); err != nil {
+		return
+	}
+
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC|os.O_SYNC, t.Permissions)
+	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(p, data, t.Permissions)
+	defer func() {
+		if err1 := f.Close(); err == nil {
+			err = err1
+		}
+	}()
+
+	_, err = f.Write(data)
+	if err != nil {
+		return
+	}
+
+	return f.Sync()
 }
 
 // Get returns object from storage by address.
