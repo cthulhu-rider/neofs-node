@@ -114,7 +114,7 @@ func listenMorphNotifications(c *cfg) {
 	registerNotificationHandlers(c.cfgContainer.scriptHash, lis, c.cfgContainer.parsers, c.cfgContainer.subscribers)
 
 	registerBlockHandler(lis, func(block *block.Block) {
-		c.log.Debug("new block", zap.Uint32("index", block.Index))
+		// c.log.Debug("new block", zap.Uint32("index", block.Index))
 		tickBlockTimers(c)
 	})
 }
