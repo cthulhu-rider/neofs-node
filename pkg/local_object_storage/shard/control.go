@@ -39,21 +39,21 @@ func (s *Shard) Init() error {
 		}
 	}
 
-	gc := &gc{
-		gcCfg:   s.gcCfg,
-		remover: s.removeGarbage,
-		mEventHandler: map[eventType]*eventHandlers{
-			eventNewEpoch: {
-				cancelFunc: func() {},
-				handlers: []eventHandler{
-					s.collectExpiredObjects,
-					s.collectExpiredTombstones,
-				},
-			},
-		},
-	}
-
-	gc.init()
+	// gc := &gc{
+	// 	gcCfg:   s.gcCfg,
+	// 	remover: s.removeGarbage,
+	// 	mEventHandler: map[eventType]*eventHandlers{
+	// 		eventNewEpoch: {
+	// 			cancelFunc: func() {},
+	// 			handlers: []eventHandler{
+	// 				s.collectExpiredObjects,
+	// 				s.collectExpiredTombstones,
+	// 			},
+	// 		},
+	// 	},
+	// }
+	//
+	// gc.init()
 
 	return nil
 }

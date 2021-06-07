@@ -40,6 +40,10 @@ func (s *Shard) Delete(prm *DeletePrm) (*DeleteRes, error) {
 	smalls := make(map[*objectSDK.Address]*blobovnicza.ID, ln)
 
 	for i := range prm.addr {
+		s.log.Info("shard DELETE",
+			zap.Stringer("id", s.ID()),
+			zap.Stringer("address", prm.addr[i]),
+		)
 		if s.hasWriteCache() {
 			err := s.writeCache.Delete(prm.addr[i])
 			if err != nil && !errors.Is(err, object.ErrNotFound) {
