@@ -3,9 +3,10 @@ module github.com/nspcc-dev/neofs-node
 go 1.14
 
 require (
+	github.com/ethereum/go-ethereum v1.10.4
 	github.com/golang/protobuf v1.4.3
-	github.com/google/uuid v1.1.1
-	github.com/hashicorp/golang-lru v0.5.4
+	github.com/google/uuid v1.1.5
+	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
 	github.com/klauspost/compress v1.11.3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mr-tron/base58 v1.1.3
@@ -22,15 +23,11 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.7.0
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	go.etcd.io/bbolt v1.3.5
 	go.uber.org/atomic v1.5.1
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.13.0
-	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad // indirect
-	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
-	golang.org/x/net v0.0.0-20191105084925-a882066a44e0 // indirect
-	golang.org/x/tools v0.0.0-20200123022218-593de606220b // indirect
 	google.golang.org/grpc v1.29.1
 	google.golang.org/protobuf v1.25.0
 )

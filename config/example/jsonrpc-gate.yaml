@@ -1,0 +1,11 @@
+http: 127.0.0.1:32228
+
+jsonrpc: 127.0.0.1:32227
+
+neofs: s01.neofs.devenv:8080
+
+key: ../devenv/wallets/wallet.key
+wallet:
+  path: "../devenv/wallets/wallet.json"
+  address: "NbUgTSFvPmsRxmGeWpuuGeJUoRoi6PErcM"
+  password: "one"
